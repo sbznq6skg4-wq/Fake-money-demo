@@ -5,17 +5,21 @@ import urllib.request
 
 from flask import Flask, jsonify, render_template
 
-# index.html fayli qayerdaligini aniq ko'rsatamiz (templates papkasi ichida)
-app = Flask(__name__, template_folder="templates")
+app = Flask(
+    __name__, template_folder="templates", static_folder="templates"
+)
 
-# Zaxira kurslar (API ishlamasa sayt baribir ishlaydi)
+# Zaxira kurslar
 FALLBACK = {"USD": 1.0, "RUB": 85.0, "UZS": 12300.0}
 cache = {"t": 0.0, "rates": FALLBACK, "live": False}
 
 
 @app.route("/")
 def index():
-  return render_template("index.html")
+  try:
+    return render_template("index.html")
+  except Exception as e:
+    return f"Shablon xatosi: {str(e)}", 500
 
 
 @app.route("/api/rates")
