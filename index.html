@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d17">
 <title>Milliarderlar Simulyatori & Darknet Shop</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
 :root{--bg:#0b0d17;--pn:#151827;--ln:#262b45;--tx:#eef0ff;--mu:#8b92bd;--ac:#ffb020;--ok:#3ddc97;--bad:#ff5c72}
 body.dn{--bg:#07050b;--pn:#120c1c;--ln:#3a1f4d;--ac:#ff2d75;--mu:#a48bbd}
@@ -65,6 +66,38 @@ dialog .pill{display:block;width:100%;margin-top:8px;text-align:center}
 #toast.show{transform:translate(-50%,0)}
 #toast.err{background:var(--bad);color:#fff}
 .foot{color:var(--mu);font-size:.78rem;text-align:center;margin-top:24px}
+
+body{padding-bottom:88px}
+body.dn{--ac:#00ff9c;--ln:#0f4d36;--pn:#07140f;--bg:#020806;--mu:#6fbf9a;background:#020806}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:8;display:flex;justify-content:space-around;gap:0;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--ln);padding:6px 2px max(6px,env(safe-area-inset-bottom))}
+nav[hidden]{display:none}
+nav button{background:none;border:0;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.62rem;position:relative;padding:4px 6px;flex:1;min-width:0}
+nav button i{font-style:normal;font-size:1.4rem}
+nav button.on{color:var(--ac)}
+nav b{position:absolute;top:-1px;right:6px;background:var(--bad);color:#fff;border-radius:9px;padding:0 5px;font-size:.62rem}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.tile{position:relative;aspect-ratio:16/10;border-radius:18px;overflow:hidden;cursor:pointer;border:1px solid var(--ln);transition:transform .15s}
+.tile:hover{transform:scale(1.02);border-color:var(--ac)}
+.tile .ph{position:absolute;inset:0;aspect-ratio:auto;font-size:4rem}
+.tile span{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;background:linear-gradient(transparent,#000d);font-weight:800;font-size:1.1rem}
+.go{width:100%;margin-top:12px;border:0;background:var(--ac);color:#111;font-weight:800;padding:14px;border-radius:14px;font-size:1.05rem}
+#map{height:52vh;min-height:300px;border-radius:16px;border:1px solid var(--ln);margin-bottom:12px}
+.leaflet-tile-pane{filter:invert(.92) hue-rotate(180deg) brightness(.9)}
+.trk{font-size:24px;filter:drop-shadow(0 0 4px #000)}
+.cardv{border-radius:18px;padding:16px;margin-bottom:12px;color:#fff;aspect-ratio:1.6;max-width:340px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px #0006}
+.cardv b{font-size:1.2rem;font-style:italic}
+.cardv .num{font-size:1.15rem;letter-spacing:.12em;font-family:ui-monospace,monospace}
+canvas#rain{position:fixed;inset:0;z-index:-1;opacity:.4;display:none;pointer-events:none}
+body.dn canvas#rain{display:block}
+.boot{color:var(--ac);font-size:.85rem;margin-bottom:8px}
+.boot span{display:block;opacity:0;animation:fi .4s forwards}
+@keyframes fi{to{opacity:1}}
+.warn{border:1px solid var(--ac);color:var(--ac);padding:10px 12px;border-radius:10px;margin:8px 0 14px;font-size:.9rem}
+.glitch{animation:gl 3s infinite}
+@keyframes gl{0%,90%,100%{transform:none;text-shadow:none}92%{transform:translate(2px,0);text-shadow:-2px 0 #f0f,2px 0 #0ff}96%{transform:translate(-2px,1px);text-shadow:2px 0 #f0f,-2px 0 #0ff}}
+.conf i{position:fixed;top:-30px;font-style:normal;font-size:1.6rem;animation:fall 2.8s linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+#toast{bottom:92px}
 </style>
 </head>
 <body>
@@ -79,15 +112,26 @@ dialog .pill{display:block;width:100%;margin-top:8px;text-align:center}
   </section>
   <p class="foot">Boylik miqdorlari taxminiy (≈2026) · Rasmlar Wikipedia'dan · O'yin hazil uchun 🙂</p>
 </div>
+<canvas id="rain"></canvas>
+<nav id="nav" hidden></nav>
 <dialog id="dlg"></dialog>
 <div id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const T = {
 uz:{pick:"Milliarderingizni tanlang",pickSub:"Tanlang va pulni sarflashni boshlang!",bal:"Balans",spent:"Sarflandi",debt:"Qarz",shop:"🛍️ Do'kon",dn:"🕶️ Darknet",mine:"🎒 Narsalarim",ord:"📦 Buyurtmalar",near:"📍 Yaqin atrofda",all:"Hammasi",search:"Qidirish...",sell:"Sotish",loan:"💳 Kredit",repay:"Qarzni to'lash",warn:"Pul yetmaydi! Kredit oling 💳",city:"Shahar",gps:"📍 Joylashuvim",empty:"Hali hech narsa yo'q",back:"← Tanlov",limit:"Kredit limiti: 1 000 000$ (qarz bilan)",about:"Mikrokredit: 20% foiz, jami 1 mln $ gacha. Qarz $ da.",noDebt:"Qarz yo'q yoki pul yo'q",ok:"Kredit berildi ✅",paid:"Qarz to'landi ✅",away:"km",off:"chegirma",val:"Jami qiymat",sold:"Sotildi (75%)",nearT:"Yaqin atrofdagi do'konlar",eta:"taxminan",c:{food:"Ovqat",tech:"Texnika",auto:"Avto",home:"Uy",sky:"Osmon",lux:"Hashamat"},st:["Buyurtma qabul qilindi ✅","Kuryer yo'lga chiqdi, probkada turibdi 🚦","Kuryer choyxonada dam olyapti 🍵","Yetib keldi! Eshikni oching 🚪"],a:["Endi boshladingiz 😌","Yaxshigina isrofgar ekansiz! 💸","Pul sizga yuk bo'lyapti 🔥","Bankrotlik yo'lida! 🚀","Endi haqiqiy isrofgarchilik ustasi! 👑"],rate:"Kurs",live:"jonli",fb:"zaxira"},
 ru:{pick:"Выберите миллиардера",pickSub:"Выбирайте и начинайте тратить!",bal:"Баланс",spent:"Потрачено",debt:"Долг",shop:"🛍️ Магазин",dn:"🕶️ Даркнет",mine:"🎒 Мои вещи",ord:"📦 Заказы",near:"📍 Рядом",all:"Все",search:"Поиск...",sell:"Продать",loan:"💳 Кредит",repay:"Погасить долг",warn:"Не хватает денег! Возьмите кредит 💳",city:"Город",gps:"📍 Моя локация",empty:"Пока пусто",back:"← Выбор",limit:"Лимит кредита: 1 000 000$ (с долгом)",about:"Микрокредит: 20%, всего до 1 млн $. Долг в $.",noDebt:"Нет долга или денег",ok:"Кредит выдан ✅",paid:"Долг погашен ✅",away:"км",off:"скидка",val:"Общая стоимость",sold:"Продано (75%)",nearT:"Магазины рядом",eta:"примерно",c:{food:"Еда",tech:"Техника",auto:"Авто",home:"Дом",sky:"Небо",lux:"Роскошь"},st:["Заказ принят ✅","Курьер выехал, стоит в пробке 🚦","Курьер отдыхает в чайхане 🍵","Приехал! Открывайте дверь 🚪"],a:["Вы только начали 😌","Неплохой транжира! 💸","Деньги вас тяготят 🔥","На пути к банкротству! 🚀","Мастер расточительства! 👑"],rate:"Курс",live:"онлайн",fb:"запасной"},
 en:{pick:"Pick your billionaire",pickSub:"Choose and start spending!",bal:"Balance",spent:"Spent",debt:"Debt",shop:"🛍️ Shop",dn:"🕶️ Darknet",mine:"🎒 My items",ord:"📦 Orders",near:"📍 Nearby",all:"All",search:"Search...",sell:"Sell",loan:"💳 Credit",repay:"Repay debt",warn:"Not enough money! Take a loan 💳",city:"City",gps:"📍 My location",empty:"Nothing here yet",back:"← Back",limit:"Credit limit: $1,000,000 (incl. debt)",about:"Micro-loan: 20% interest, up to $1M total. Debt in $.",noDebt:"No debt or no cash",ok:"Loan granted ✅",paid:"Debt repaid ✅",away:"km",off:"off",val:"Total value",sold:"Sold (75%)",nearT:"Stores nearby",eta:"approx.",c:{food:"Food",tech:"Tech",auto:"Cars",home:"Homes",sky:"Sky",lux:"Luxury"},st:["Order accepted ✅","Courier is on the way, stuck in traffic 🚦","Courier is resting at a teahouse 🍵","Arrived! Open the door 🚪"],a:["You just started 😌","Quite the spender! 💸","Money is a burden for you 🔥","Heading to bankruptcy! 🚀","Grand master of waste! 👑"],rate:"Rate",live:"live",fb:"fallback"}};
+
+Object.assign(T.uz,{cart:"🛒 Savat",map:"🗺️ Xarita",me:"👤 Profil",back2:"← Kategoriyalar",checkout:"Buyurtma berish",total:"Jami",emptyCart:"Savat bo'sh",again:"Qayta urinish",speed:"⚡ Tezlashtirish",csearch:"Shahar yoki joy qidirish...",cardT:"Kartalarim",demo:"DEMO: haqiqiy karta emas",spMsg:"Bu xarid: {a}% · Jami sarflandi: {p}% · Qoldi: {l}%",done:"Buyurtma qabul qilindi!",items:"ta narsa",u:["kun","soat","daq"],
+ dk:["⚠️ Kimdir sizni kuzatyapti... xavotir olmang, bu qo'shni Karim aka 👀","🔒 Ulanish shifrlandi. IP: 127.0.0.1 (o'z uyingiz 🏠)","👻 Bu do'konda hamma narsa o'yinchoq. Hatto qo'rquv ham!"],boot:["> connecting to node #7 ...","> tor --hide-from-mom ... OK","> ACCESS GRANTED"]});
+Object.assign(T.ru,{cart:"🛒 Корзина",map:"🗺️ Карта",me:"👤 Профиль",back2:"← Категории",checkout:"Оформить заказ",total:"Итого",emptyCart:"Корзина пуста",again:"Попробовать снова",speed:"⚡ Ускорить",csearch:"Поиск города или места...",cardT:"Мои карты",demo:"ДЕМО: не настоящая карта",spMsg:"Эта покупка: {a}% · Всего потрачено: {p}% · Осталось: {l}%",done:"Заказ принят!",items:"шт.",u:["дн","ч","мин"],
+ dk:["⚠️ За вами кто-то следит... не бойтесь, это сосед Карим 👀","🔒 Соединение зашифровано. IP: 127.0.0.1 (ваш дом 🏠)","👻 Здесь всё игрушечное. Даже страх!"],boot:["> connecting to node #7 ...","> tor --hide-from-mom ... OK","> ACCESS GRANTED"]});
+Object.assign(T.en,{cart:"🛒 Cart",map:"🗺️ Map",me:"👤 Profile",back2:"← Categories",checkout:"Checkout",total:"Total",emptyCart:"Cart is empty",again:"Try again",speed:"⚡ Speed up",csearch:"Search a city or place...",cardT:"My cards",demo:"DEMO: not a real card",spMsg:"This purchase: {a}% · Total spent: {p}% · Left: {l}%",done:"Order placed!",items:"items",u:["d","h","min"],
+ dk:["⚠️ Someone is watching you... relax, it's just neighbor Karim 👀","🔒 Connection encrypted. IP: 127.0.0.1 (your own home 🏠)","👻 Everything here is a toy. Even the fear!"],boot:["> connecting to node #7 ...","> tor --hide-from-mom ... OK","> ACCESS GRANTED"]});
+Object.assign(T.uz.c,{isl:"Orollar",sea:"Yaxta va qayiqlar"});Object.assign(T.ru.c,{isl:"Острова",sea:"Яхты и лодки"});Object.assign(T.en.c,{isl:"Islands",sea:"Yachts & boats"});
 
 const CH = [
  ["musk","Elon Musk","Tesla · SpaceX · X",450e9,"Elon_Musk"],
@@ -224,12 +268,24 @@ const ITEMS = [
 ];
 const DW = {pasp:"Diplomatic passport",qarz:"Ledger",btc:"Bitcoin",metro:"Tashkent Metro",fly:"Housefly",gun:"Water gun",pill:"Placebo",ufo:"Unidentified flying object",book:"Library",tunnel:"Tunnel",ninja:"Ninja",agent:"Espionage"};
 ITEMS.forEach(i => { if (DW[i.id]) i.w = DW[i.id]; });
+ITEMS.forEach(i => { if (i.id==="yacht") i.c="sea"; if (i.id==="island") i.c="isl"; });
+ITEMS.push(
+ I("azzam","sea","🛥️","Azzam Yacht",6e8,"Azzam (yacht)"),
+ I("eclipse","sea","🛥️","Eclipse Yacht",5e8,"Eclipse (yacht)"),
+ I("jetski","sea","🌊",["Gidrotsikl","Гидроцикл","Jet Ski"],9000,"Personal watercraft"),
+ I("sail","sea","⛵",["Yelkanli qayiq","Парусная лодка","Sailboat"],80000,"Sailboat"),
+ I("necker","isl","🏝️","Necker Island",8e7,"Necker Island"),
+ I("lanai","isl","🌴","Lanai",3e8,"Lanai"),
+ I("musha","isl","🏝️","Musha Cay",1.5e8,"Musha Cay"),
+ I("palm","isl","🌴",["Dubay Palm oroli","Остров Пальма (Дубай)","Palm Jumeirah lot"],2e7,"Palm Jumeirah")
+);
+
 const ALL = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 const CITIES = {"Toshkent":[41.31,69.24],"Samarqand":[39.65,66.96],"Dubay":[25.2,55.27],"Moskva":[55.75,37.62],"London":[51.51,-0.13],"New York":[40.71,-74.0]};
 const SHOPS = {"Toshkent":["Chorsu bozori","Toshkent City Mall","Mega Planet"],"Samarqand":["Registon bozori","Samarqand Darvoza"],"Dubay":["Dubai Mall","Gold Souk"],"Moskva":["GUM","Evropeyskiy"],"London":["Harrods","Camden Market"],"New York":["Fifth Avenue","Chelsea Market"]};
 const TH = [1,10,30,60,90];
 
-let R = {USD:1,RUB:85,UZS:12300}, live = false;
+let R = {USD:1,RUB:80.6,UZS:11900}; // kurslar 2026-avgust holatiga qotirilgan (jonli emas)
 const SYM = {USD:"$",RUB:"₽",UZS:"so'm"};
 const nav0 = (navigator.language||"uz").slice(0,2);
 let S; try { S = JSON.parse(localStorage.getItem("bs")||"null"); } catch(e) {}
@@ -237,7 +293,7 @@ S = S || {lang: nav0==="ru"?"ru":nav0==="en"?"en":"uz", cur:"USD", city:"Toshken
 let IC = {}; try { IC = JSON.parse(localStorage.getItem("ic")||"{}"); } catch(e) {}
 const save = () => { try { localStorage.setItem("bs", JSON.stringify(S)); } catch(e) {} };
 const t = k => T[S.lang][k];
-const L = () => ({uz:0,ru:1,en:2})[S.lang];
+const LI = () => ({uz:0,ru:1,en:2})[S.lang];
 const hash = s => { let h = 5381; for (const c of String(s)) h = ((h*33) ^ c.charCodeAt(0)) >>> 0; return h; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 function fmt(u) {
@@ -272,48 +328,92 @@ function tick() { const e=$("#bal"); if(!e) return; shown += (S.cash-shown)*.15;
 function pct() { return Math.max(0, Math.min(100, S.spent/(S.start+S.loaned)*100)); }
 function tier() { let k=-1; TH.forEach((x,i)=>{ if(pct()>=x) k=i; }); return k; }
 
+const kf = (i,d,s) => i+"|"+d+"|"+s;
+const CATS = ["food","tech","auto","home","isl","sea","sky","lux"];
+const CW = {food:["🍔","Pizza"],tech:["📱","IPhone"],auto:["🚗","Bugatti Chiron"],home:["🏙️","Burj Khalifa"],isl:["🏝️","Necker Island"],sea:["🛥️","Superyacht"],sky:["✈️","Gulfstream G650"],lux:["💎","Rolex"]};
+const ORG = [["New York",40.71,-74.0],["Detroit",42.33,-83.05],["Tokyo",35.68,139.69],["Berlin",52.52,13.4],["Shanghai",31.23,121.47],["Milano",45.46,9.19],["Dubay",25.2,55.27],["Istanbul",41.01,28.98],["Seul",37.57,126.98]];
+const UZC = ["damas","malibu","cobalt","nexia","gentra","trax"];
+const COUNTRIES = [["UZ","🇺🇿 O'zbekiston"],["RU","🇷🇺 Россия"],["US","🇺🇸 USA"],["TR","🇹🇷 Türkiye"],["KZ","🇰🇿 Qozog'iston"],["AE","🇦🇪 UAE"],["GB","🇬🇧 UK"],["DE","🇩🇪 Deutschland"]];
+const BR = {Visa:["4","#1a3fbf,#0b1a5e"],Mastercard:["5","#e8590c,#7a1f00"],Humo:["9860","#0a8f6a,#03382a"],Uzcard:["8600","#1e6fd9,#06224d"]};
+let MAP = null, TR = [], lastTab = "";
+const cityName = () => S.city==="📍" ? (S.locName||"📍") : S.city;
+const km = (a,b) => { const r=Math.PI/180, x=(b[0]-a[0])*r, y=(b[1]-a[1])*r, h=Math.sin(x/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(y/2)**2; return 12742*Math.asin(Math.sqrt(h)); };
+const pos = o => { const f=Math.min(1,(Date.now()-o.t)/o.dur); return [o.o[0]+(o.d[0]-o.o[0])*f, o.o[1]+(o.d[1]-o.o[1])*f]; };
+const eta = ms => { const u=t("u"), d=ms/864e5|0, h=ms%864e5/36e5|0, m=Math.ceil(ms%36e5/6e4); return t("eta")+" "+(d?d+" "+u[0]+" ":"")+(h?h+" "+u[1]+" ":"")+(!d?m+" "+u[2]:""); };
+const cartTotal = () => Object.values(S.cart).reduce((a,l)=>a+ALL[l.id].p*l.d*l.q, 0);
+function luhnOk(n){ let s=0; [...n].reverse().forEach((d,i)=>{ d=+d; if(i%2){ d*=2; if(d>9) d-=9; } s+=d; }); return s%10===0; }
+function mkCard(b){ let n=BR[b][0]; while(n.length<16) n+=Math.random()*10|0; if(luhnOk(n)) n=n.slice(0,15)+((+n[15]+1)%10); const m=1+Math.random()*12|0; return {b,n,e:(m<10?"0":"")+m+"/"+(29+(Math.random()*4|0))}; }
+function cards(){ S.cards=S.cards||{}; const c=S.country; if(!S.cards[c]) S.cards[c]=(c==="UZ"?["Humo","Uzcard"]:["Visa","Mastercard"]).map(mkCard); return S.cards[c]; }
+const cardHtml = c => `<div class="cardv" style="background:linear-gradient(135deg,${BR[c.b][1]})"><b>${c.b}</b><div class="num">${c.n.replace(/(.{4})/g,"$1 ").trim()}</div><div class="row sp"><span>${esc(CH.find(x=>x[0]===S.ch)[1])}</span><span>${c.e}</span></div></div>`;
+
+function renderNav() {
+  const n = Object.values(S.cart).reduce((a,l)=>a+l.q,0), nv = $("#nav");
+  nv.hidden = !S.ch;
+  nv.innerHTML = ["shop","dn","cart","ord","map","me"].map(x => { const [i,...r]=t(x).split(" "); return `<button class="${S.tab===x?"on":""}" data-a="tab" data-id="${x}"><i>${i}</i>${r.join(" ")}${x==="cart"&&n?`<b>${n}</b>`:""}</button>`; }).join("");
+}
+
 function renderTop() {
   const c = CH.find(x=>x[0]===S.ch), p = pct(), k = tier();
   const cities = Object.keys(CITIES).concat(S.loc?["📍"]:[]);
   $("#top").innerHTML = `
   <div class="row sp"><button class="pill" data-a="back">${t("back")}</button><span class="who">${c[1]}</span>${langSel()}</div>
-  <div class="row" style="margin:8px 0 2px">${["USD","RUB","UZS"].map(x=>`<button class="pill ${x===S.cur?"on":""}" data-a="cur" data-id="${x}">${x} (${SYM[x]})</button>`).join("")}<small style="color:var(--mu)">${t("rate")}: 1$ = ${Math.round(R.UZS)} so'm · ${R.RUB.toFixed(1)} ₽ (${live?t("live"):t("fb")})</small></div>
+  <div class="row" style="margin:8px 0 2px">${["USD","RUB","UZS"].map(x=>`<button class="pill ${x===S.cur?"on":""}" data-a="cur" data-id="${x}">${x} (${SYM[x]})</button>`).join("")}<small style="color:var(--mu)">${t("rate")}: 1$ = ${Math.round(R.UZS)} so'm · ${R.RUB} ₽ (2026-08)</small></div>
   <div class="bal"><small>${t("bal")}</small><div id="bal">${fmt(shown)}</div></div>
   <div class="stats"><div>${t("spent")}: <b>${p.toFixed(p<10?2:1)}%</b><div class="bar"><i style="width:${p}%"></i></div><small>${k>=0?t("a")[k]:""}</small></div>
   <div>${t("debt")}: <span class="debt">${fmt(S.debt)}</span><div class="row" style="margin-top:6px"><button class="pill" data-a="loanDlg">${t("loan")}</button><button class="pill" data-a="repay">${t("repay")}</button></div></div></div>
-  <div class="row"><select class="pill" data-a="city" aria-label="${t("city")}">${cities.map(x=>`<option ${x===S.city?"selected":""}>${x}</option>`).join("")}</select><button class="pill" data-a="gps">${t("gps")}</button></div>
-  <nav>${["shop","dn","mine","ord","near"].map(x=>`<button class="pill ${S.tab===x?"on":""}" data-a="tab" data-id="${x}">${t(x)}</button>`).join("")}</nav>`;
-  tick();
+  <div class="row"><select class="pill" data-a="city" aria-label="${t("city")}">${cities.map(x=>`<option value="${x}" ${x===S.city?"selected":""}>${x==="📍"?"📍 "+esc(S.locName||""):x}</option>`).join("")}</select></div>`;
+  tick(); renderNav();
 }
 
 function match(it, q) { return !q || it.n.some(n => n.toLowerCase().includes(q)); }
-function card(it, d, shop) {
-  const p = it.p*(d||1), q = S.inv[it.id]||0;
-  return `<div class="card"><div class="ph" data-w="${it.w}">${it.e}</div><div class="cb"><b>${esc(it.n[L()])}</b>${d&&d<1?`<span class="tag">−${Math.round((1-d)*100)}% ${t("off")} · ${esc(shop)}</span>`:""}<div class="pr">${fmt(p)}</div><div class="qty"><button data-a="sell" data-id="${it.id}" ${q?"":"disabled"} aria-label="−">−</button><span>${q}</span><button data-a="buy" data-id="${it.id}" data-d="${d||1}" data-s="${esc(shop||"")}" aria-label="+">+</button></div></div></div>`;
+function card(it, d, shop, own) {
+  d = d||1; shop = shop||"";
+  const k = kf(it.id,d,shop), c = (S.cart[k]||{}).q||0, o = S.inv[it.id]||0;
+  return `<div class="card"><div class="ph" data-w="${it.w}">${it.e}</div><div class="cb"><b>${esc(it.n[LI()])}</b>${d<1?`<span class="tag">−${Math.round((1-d)*100)}% ${t("off")} · ${esc(shop)}</span>`:""}${o?`<small>✔ ${o}</small>`:""}<div class="pr">${fmt(it.p*d)}</div>` +
+   (own ? `<button class="pill" data-a="sell" data-id="${it.id}">${t("sell")} · ${fmt(it.p*.75)}</button>`
+        : `<div class="qty"><button data-a="cdec" data-k="${k}" ${c?"":"disabled"} aria-label="−">−</button><span>${c}</span><button data-a="cadd" data-id="${it.id}" data-d="${d}" data-s="${esc(shop)}" aria-label="+">+</button></div>`) + `</div></div>`;
+}
+
+function initMap() {
+  const el = $("#map"); if (typeof L==="undefined") { el.textContent = "Map error"; return; }
+  const c = coords(); MAP = L.map(el).setView(c, S.orders.some(o=>o.o&&Date.now()-o.t<o.dur)?3:5);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(MAP);
+  L.marker(c).addTo(MAP).bindPopup("📍 "+cityName());
+  MAP.on("click", e => setLoc(e.latlng.lat, e.latlng.lng, e.latlng.lat.toFixed(2)+", "+e.latlng.lng.toFixed(2)));
+  TR = [];
+  S.orders.forEach(o => { if (!o.o || Date.now()-o.t>=o.dur) return; L.polyline([o.o,o.d],{color:"#ffb020",dashArray:"6 8",weight:2}).addTo(MAP); const it=ALL[o.id]; TR.push([o, L.marker(pos(o),{icon:L.divIcon({html:"🚚",className:"trk",iconSize:[28,28]})}).addTo(MAP).bindPopup(it.e+" "+it.n[LI()])]); });
+  setTimeout(() => MAP && MAP.invalidateSize(), 250);
 }
 
 function renderMain() {
   document.body.classList.toggle("dn", S.tab==="dn");
-  const q = $("#q").value.trim().toLowerCase(), m = $("#main"), tab = S.tab;
-  $("#tools").hidden = !(tab==="shop"||tab==="dn");
-  $("#q").placeholder = t("search");
-  $("#chips").innerHTML = tab==="shop" ? ["all","food","tech","auto","home","sky","lux"].map(c=>`<button class="pill ${S.cat===c?"on":""}" data-a="cat" data-id="${c}">${c==="all"?t("all"):t("c")[c]}</button>`).join("") : "";
-  if (tab==="shop"||tab==="dn") {
-    const list = ITEMS.filter(i => i.dn===(tab==="dn"?1:0) && (tab==="dn"||S.cat==="all"||i.c===S.cat) && match(i,q));
-    m.innerHTML = `<div class="grid">${list.map(i=>card(i)).join("")}</div>`;
-  } else if (tab==="mine") {
-    const list = ITEMS.filter(i => S.inv[i.id]), tot = list.reduce((a,i)=>a+i.p*S.inv[i.id],0);
-    m.innerHTML = list.length ? `<h3>${t("val")}: ${fmt(tot)}</h3><div class="grid">${list.map(i=>card(i)).join("")}</div>` : `<p class="sub">${t("empty")}</p>`;
+  const q = $("#q").value.trim().toLowerCase(), m = $("#main"), tab = S.tab, TT = T[S.lang];
+  $("#tools").hidden = !(tab==="shop"||tab==="dn"); $("#q").placeholder = t("search"); $("#chips").innerHTML = "";
+  if (MAP) { MAP.remove(); MAP = null; }
+  let h = "";
+  if (tab==="shop") {
+    if (S.cat==="all" && !q) h = `<div class="grid tiles">${CATS.map(c=>`<div class="tile" data-a="cat" data-id="${c}"><div class="ph" data-w="${CW[c][1]}">${CW[c][0]}</div><span>${t("c")[c]}</span></div>`).join("")}</div>`;
+    else h = (S.cat!=="all"?`<button class="pill" data-a="cat" data-id="all">${t("back2")}</button><h3>${t("c")[S.cat]}</h3>`:"") + `<div class="grid">${ITEMS.filter(i=>!i.dn&&match(i,q)&&(S.cat==="all"||i.c===S.cat)).map(i=>card(i)).join("")}</div>`;
+  } else if (tab==="dn") {
+    h = (lastTab!=="dn" ? `<pre class="boot">${TT.boot.map((x,i)=>`<span style="animation-delay:${i*.45}s">${x}</span>`).join("")}</pre>` : "") + `<div class="warn glitch">${TT.dk[Math.random()*TT.dk.length|0]}</div><div class="grid">${ITEMS.filter(i=>i.dn&&match(i,q)).map(i=>card(i)).join("")}</div>`;
+  } else if (tab==="cart") {
+    const ls = Object.entries(S.cart), tot = cartTotal();
+    h = ls.length ? ls.map(([k,l]) => { const it=ALL[l.id]; return `<div class="ord"><div class="e">${it.e}</div><div style="flex:1"><b>${esc(it.n[LI()])}</b><small>${l.q} × ${fmt(it.p*l.d)}${l.s?" · "+esc(l.s):""}</small></div><div class="qty" style="width:112px"><button data-a="cdec" data-k="${k}">−</button><span>${l.q}</span><button data-a="cadd" data-id="${l.id}" data-d="${l.d}" data-s="${esc(l.s)}">+</button></div></div>`; }).join("") + `<h3>${t("total")}: ${fmt(tot)}</h3><small>${(tot/(S.start+S.loaned)*100).toFixed(3)}%</small><button class="go" data-a="checkout">${t("checkout")}</button>` : `<p class="sub">${t("emptyCart")}</p>`;
   } else if (tab==="ord") {
-    m.innerHTML = S.orders.length ? S.orders.map(o => {
-      const it = ALL[o.id], age = (Date.now()-o.t)/1000, k = age<6?0:age<15?1:age<30?2:3;
-      return `<div class="ord"><div class="e">${it.e}</div><div><b>${esc(it.n[L()])}</b><small>📍 ${esc(o.c)}${o.s?" · "+esc(o.s):""} · ${o.km} ${t("away")}</small><span class="stx">${t("st")[k]}</span>${k<3?`<small>${t("eta")} ${Math.max(1,Math.ceil((30-age)/5))} min</small>`:""}</div></div>`;
+    h = S.orders.length ? S.orders.map((o,i) => {
+      const it=ALL[o.id], dur=o.dur||30000, age=Date.now()-o.t, f=Math.min(1,age/dur), k=f>=1?3:f<.05?0:f<.6?1:2;
+      return `<div class="ord"><div class="e">${it.e}</div><div style="flex:1"><b>${esc(it.n[LI()])}${o.q>1?" ×"+o.q:""}</b><small>📍 ${esc(o.c)}${o.on?" ← "+esc(o.on):""}${o.s?" · "+esc(o.s):""}</small><span class="stx">${t("st")[k]}</span><div class="bar"><i style="width:${f*100}%"></i></div>${f<1?`<small>${eta(dur-age)}</small><button class="pill" data-a="speed" data-i="${i}">${t("speed")}</button>`:""}</div></div>`;
     }).join("") : `<p class="sub">${t("empty")}</p>`;
+  } else if (tab==="map") {
+    const sh = (SHOPS[S.city]||["Local Market"]).slice(0,2), pool = ITEMS.filter(i=>!i.dn&&i.p<=2e6);
+    h = `<div class="row" style="margin-bottom:8px"><input id="cs" class="pill" style="flex:1;min-width:0" placeholder="${t("csearch")}"><button class="pill on" data-a="csearch">🔎</button><button class="pill" data-a="gps">${t("gps")}</button></div><div id="map"></div><h3>${t("nearT")}: ${esc(cityName())}</h3>` +
+      sh.map(s => { const hh=hash(s+S.city); return `<h3>🏪 ${esc(s)} · ${(.4+hh%40/10).toFixed(1)} ${t("away")}</h3><div class="grid">${[0,1,2].map(j=>card(pool[(hh+j*7)%pool.length],.85,s)).join("")}</div>`; }).join("");
   } else {
-    const [la,lo] = coords(), shops = SHOPS[S.city] || ["Local Market","Bazaar"], pool = ITEMS.filter(i=>!i.dn && i.p<=2e6);
-    m.innerHTML = `<iframe title="map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${lo-.05},${la-.03},${lo+.05},${la+.03}&layer=mapnik&marker=${la},${lo}"></iframe><h3>${t("nearT")}: ${esc(S.city)}</h3>` +
-      shops.map(s => { const h = hash(s+S.city), km = (.4+h%40/10).toFixed(1); return `<h3>🏪 ${esc(s)} · ${km} ${t("away")}</h3><div class="grid">${[0,1,2].map(j=>card(pool[(h+j*7)%pool.length],.85,s)).join("")}</div>`; }).join("");
+    const own = ITEMS.filter(i=>S.inv[i.id]), tot = own.reduce((a,i)=>a+i.p*S.inv[i.id],0);
+    h = `<h3>${t("cardT")}</h3><div class="row" style="margin-bottom:8px"><select class="pill" data-a="country">${COUNTRIES.map(([c,n])=>`<option value="${c}" ${c===S.country?"selected":""}>${n}</option>`).join("")}</select></div>${cards().map(cardHtml).join("")}<small>${t("demo")}</small><h3>${t("mine")}${own.length?" · "+fmt(tot):""}</h3>` + (own.length ? `<div class="grid">${own.map(i=>card(i,1,"",1)).join("")}</div>` : `<p class="sub">${t("empty")}</p>`);
   }
+  m.innerHTML = h; lastTab = tab;
+  if (tab==="map") initMap();
   loadImgs();
 }
 const render = () => { renderTop(); renderMain(); };
@@ -322,13 +422,30 @@ function after() {
   const k = tier(); if (k > S.tier) { S.tier = k; toast("🏆 "+Math.round(pct())+"% — "+t("a")[k]); }
   save(); render();
 }
-function buy(id, d, shop) {
-  const it = ALL[id], p = it.p*d;
-  if (S.cash < p) return toast(t("warn"), 1);
-  S.cash -= p; S.spent += p; S.inv[id] = (S.inv[id]||0)+1;
-  const km = +(.5+hash(id+Date.now())%50/10).toFixed(1);
-  S.orders.unshift({id, t:Date.now(), c:S.city==="📍"?"📍":S.city, s:shop, km}); S.orders = S.orders.slice(0,40);
-  toast("🛵 "+it.n[L()]+" — "+t("st")[0]); after();
+function cadd(id, d, s) { const k=kf(id,d,s); (S.cart[k]=S.cart[k]||{id,d,s,q:0}).q++; save(); renderNav(); renderMain(); }
+function cdec(k) { const l=S.cart[k]; if (!l) return; if (--l.q<=0) delete S.cart[k]; save(); renderNav(); renderMain(); }
+function checkout() {
+  const tot = cartTotal(); if (!tot) return;
+  if (S.cash < tot) return toast(t("warn"), 1);
+  const dest = coords(), dn = cityName(); let n = 0;
+  Object.values(S.cart).forEach(l => {
+    const it = ALL[l.id]; S.inv[l.id] = (S.inv[l.id]||0)+l.q; n += l.q;
+    let o, on = "";
+    if (l.s || it.c==="food") { o = [dest[0]+.04, dest[1]+.04]; on = l.s; }
+    else if (UZC.includes(l.id)) { o = [40.64,72.24]; on = "Asaka"; }
+    else { const g = ORG[hash(l.id)%ORG.length]; o = [g[1],g[2]]; on = g[0]; }
+    S.orders.unshift({id:l.id, q:l.q, t:Date.now(), dur:Math.min(6048e5,(1800+km(o,dest)*60)*1000), o, d:dest, c:dn, s:l.s, on, price:it.p*l.d*l.q});
+  });
+  const a = tot/(S.start+S.loaned)*100;
+  S.cash -= tot; S.spent += tot; S.cart = {}; S.orders = S.orders.slice(0,40);
+  const dl = $("#dlg");
+  dl.innerHTML = `<div class="conf">${Array.from({length:18},(_,i)=>`<i style="left:${i*5.6}%;animation-delay:${(i%6)*.25}s">💸</i>`).join("")}</div><h3>✅ ${t("done")}</h3><p>${n} ${t("items")} · ${fmt(tot)}</p><p style="margin-top:8px">${t("spMsg").replace("{a}",a.toFixed(3)).replace("{p}",pct().toFixed(2)).replace("{l}",(100-pct()).toFixed(2))}</p><button class="pill on" data-a="okd">OK</button><button class="pill" data-a="again">${t("again")}</button>`;
+  dl.showModal(); after();
+}
+function speed(i) {
+  const o = S.orders[i]; if (!o) return; const c = Math.max(1, o.price*.02);
+  if (S.cash < c) return toast(t("warn"), 1);
+  S.cash -= c; o.dur = Math.min(o.dur, Date.now()-o.t+20000); toast("⚡ −"+fmt(c)); after();
 }
 function sell(id) {
   if (!S.inv[id]) return; const g = ALL[id].p*.75;
@@ -343,48 +460,80 @@ function repay() {
   const x = Math.min(S.cash, S.debt); if (x < .01) return toast(t("noDebt"), 1);
   S.cash -= x; S.debt = S.debt-x < .01 ? 0 : S.debt-x; toast(t("paid")); after();
 }
+function setLoc(la, lo, name) { S.loc=[la,lo]; S.locName=name; S.city="📍"; save(); render(); }
+function gps() {
+  if (!navigator.geolocation) return toast("GPS yo'q", 1);
+  navigator.geolocation.getCurrentPosition(p => setLoc(p.coords.latitude, p.coords.longitude, "GPS"), () => toast("GPS ruxsati berilmadi", 1), {timeout:8000});
+}
+function csearch() {
+  const v = ($("#cs").value||"").trim(); if (!v) return;
+  fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(v)).then(r=>r.json()).then(j => {
+    if (!j.length) return toast("?", 1); setLoc(+j[0].lat, +j[0].lon, j[0].display_name.split(",")[0]);
+  }).catch(() => toast("Xarita qidiruvi ishlamadi", 1));
+}
 function start(id) {
   const c = CH.find(x=>x[0]===id);
-  Object.assign(S, {ch:id, cash:c[3], start:c[3], loaned:0, debt:0, spent:0, inv:{}, orders:[], tier:-1, tab:"shop", cat:"all"});
+  Object.assign(S, {ch:id, cash:c[3], start:c[3], loaned:0, debt:0, spent:0, inv:{}, cart:{}, orders:[], tier:-1, tab:"shop", cat:"all"});
   shown = S.cash; show(); save();
 }
 function show() {
-  const g = !!S.ch; $("#pick").hidden = g; $("#game").hidden = !g;
+  const g = !!S.ch; $("#pick").hidden = g; $("#game").hidden = !g; $("#nav").hidden = !g;
   g ? render() : renderPick();
+  if (g && !S.asked) { S.asked = 1; save(); gps(); }
 }
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-a]"); if (!b || b.tagName==="SELECT") return;
-  const a = b.dataset.a, id = b.dataset.id;
+  const a = b.dataset.a, id = b.dataset.id, ds = b.dataset;
   if (a==="start") start(id);
   else if (a==="back") { S.ch=""; save(); show(); }
   else if (a==="cur") { S.cur=id; save(); shown=S.cash; render(); }
-  else if (a==="tab") { S.tab=id; save(); render(); }
-  else if (a==="cat") { S.cat=id; save(); renderMain(); }
-  else if (a==="buy") buy(id, +b.dataset.d, b.dataset.s);
+  else if (a==="tab") { S.tab=id; save(); render(); scrollTo(0,0); }
+  else if (a==="cat") { S.cat=id; save(); renderMain(); scrollTo(0,0); }
+  else if (a==="cadd") cadd(id, +ds.d, ds.s);
+  else if (a==="cdec") cdec(ds.k);
   else if (a==="sell") sell(id);
   else if (a==="repay") repay();
   else if (a==="loan") loan(+id);
+  else if (a==="checkout") checkout();
+  else if (a==="speed") speed(+ds.i);
+  else if (a==="csearch") csearch();
+  else if (a==="gps") gps();
+  else if (a==="okd") $("#dlg").close();
+  else if (a==="again") { $("#dlg").close(); start(S.ch); }
   else if (a==="loanDlg") { const d=$("#dlg"); d.innerHTML=`<p style="margin-bottom:6px">${t("about")}</p>`+[1e4,1e5,1e6].map(v=>`<button class="pill" data-a="loan" data-id="${v}">+ ${fmt(v)} → ${t("debt")} ${fmt(v*1.2)}</button>`).join("")+`<button class="pill" onclick="this.closest('dialog').close()">✕</button>`; d.showModal(); }
-  else if (a==="gps") {
-    if (!navigator.geolocation) return toast("GPS yo'q", 1);
-    navigator.geolocation.getCurrentPosition(p => { S.loc=[p.coords.latitude,p.coords.longitude]; S.city="📍"; save(); render(); }, () => toast("GPS ruxsati berilmadi", 1));
-  }
 });
 document.addEventListener("change", e => {
   const a = e.target.dataset.a;
   if (a==="lang") { S.lang=e.target.value; document.documentElement.lang=S.lang; save(); show(); }
   else if (a==="city") { S.city=e.target.value; save(); render(); }
+  else if (a==="country") { S.country=e.target.value; save(); renderMain(); }
 });
+document.addEventListener("keydown", e => { if (e.target.id==="cs" && e.key==="Enter") csearch(); });
 $("#q").addEventListener("input", renderMain);
-setInterval(() => { if (S.ch && S.tab==="ord") renderMain(); }, 2500);
+setInterval(() => {
+  if (!S.ch) return;
+  if (S.tab==="ord") renderMain();
+  else if (S.tab==="map" && MAP) TR.forEach(([o,m]) => m.setLatLng(pos(o)));
+}, 2500);
 
-function getRates() {
-  fetch("/api/rates").then(r=>r.json()).then(j => { R=j.rates; live=j.live; if (S.ch) renderTop(); else renderPick(); }).catch(()=>{});
-}
+// Matrix yomg'iri (faqat Darknet'da ko'rinadi)
+(function () {
+  const c = $("#rain"), x = c.getContext("2d"); let w, h, ys = [];
+  const rs = () => { w = c.width = innerWidth; h = c.height = innerHeight; ys = Array(Math.floor(w/16)).fill(0); };
+  rs(); addEventListener("resize", rs);
+  setInterval(() => {
+    if (!document.body.classList.contains("dn")) return;
+    x.fillStyle = "rgba(2,8,6,.12)"; x.fillRect(0,0,w,h); x.fillStyle = "#00ff9c"; x.font = "14px monospace";
+    ys.forEach((y,i) => { x.fillText("01ABCDEF<>{}$#"[Math.random()*14|0], i*16, y); ys[i] = y>h && Math.random()>.975 ? 0 : y+16; });
+  }, 60);
+})();
+
 document.documentElement.lang = S.lang;
+S.cart = S.cart || {}; S.country = S.country || ({uz:"UZ",ru:"RU",en:"US"})[S.lang];
+if (S.tab==="mine" || S.tab==="near") S.tab = "shop";
 if (S.ch && typeof S.cash!=="number") S.ch = "";
-shown = S.cash || 0; show(); getRates(); setInterval(getRates, 600000);
+shown = S.cash || 0; show();
 </script>
 </body>
 </html>
