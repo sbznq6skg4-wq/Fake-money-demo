@@ -388,4 +388,3 @@ shown = S.cash || 0; show(); getRates(); setInterval(getRates, 600000);
 </script>
 </body>
 </html>
-
