@@ -5,7 +5,8 @@ import urllib.request
 
 from flask import Flask, jsonify, render_template
 
-app = Flask(__name__)
+# index.html fayli app.py bilan bitta papkada (tashqarida) turgani uchun shu sozlamani yozamiz
+app = Flask(__name__, template_folder=".")
 
 # Zaxira kurslar (API ishlamasa sayt baribir ishlaydi)
 FALLBACK = {"USD": 1.0, "RUB": 85.0, "UZS": 12300.0}
@@ -31,3 +32,4 @@ def rates():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+
