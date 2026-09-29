@@ -5,21 +5,16 @@ import urllib.request
 
 from flask import Flask, jsonify, render_template
 
-app = Flask(
-    __name__, template_folder="templates", static_folder="templates"
-)
+app = Flask(__name__)
 
-# Zaxira kurslar
+# Zaxira kurslar (API ishlamasa ham sayt ishlaydi)
 FALLBACK = {"USD": 1.0, "RUB": 85.0, "UZS": 12300.0}
 cache = {"t": 0.0, "rates": FALLBACK, "live": False}
 
 
 @app.route("/")
 def index():
-  try:
-    return render_template("index.html")
-  except Exception as e:
-    return f"Shablon xatosi: {str(e)}", 500
+  return render_template("index.html")
 
 
 @app.route("/api/rates")
