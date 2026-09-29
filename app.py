@@ -5,7 +5,8 @@ import urllib.request
 
 from flask import Flask, jsonify, render_template
 
-app = Flask(__name__)
+# index.html fayli qayerdaligini aniq ko'rsatamiz (templates papkasi ichida)
+app = Flask(__name__, template_folder="templates")
 
 # Zaxira kurslar (API ishlamasa sayt baribir ishlaydi)
 FALLBACK = {"USD": 1.0, "RUB": 85.0, "UZS": 12300.0}
@@ -35,7 +36,7 @@ def rates():
             live=True,
         )
     except Exception:
-      cache["t"] = time.time() - 3300  # Xatolik bo'lsa zaxirada qoladi
+      cache["t"] = time.time() - 3300
   return jsonify(rates=cache["rates"], live=cache["live"])
 
 
