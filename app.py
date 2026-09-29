@@ -4,7 +4,8 @@ import traceback
 import urllib.request
 from flask import Flask, jsonify, render_template
 
-app = Flask(__name__)
+# index.html app.py bilan bir xil papkada turgani uchun yo'lni ko'rsatamiz
+app = Flask(__name__, template_folder=".")
 
 FALLBACK = {"USD": 1.0, "RUB": 85.0, "UZS": 12300.0}
 cache = {"t": 0.0, "rates": FALLBACK, "live": False}
@@ -14,7 +15,6 @@ def index():
     try:
         return render_template("index.html")
     except Exception as e:
-        # Xatolikni ekranda matn ko'rinishida chiqaramiz
         error_details = traceback.format_exc()
         return f"<pre style='color:red; font-size:16px;'>Xatolik yuz berdi:\n{error_details}</pre>", 500
 
